@@ -1,80 +1,72 @@
-﻿using FastTunnel.Core.Config;
+// Licensed under the Apache License, Version 2.0 (the "License").
+// You may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//     https://github.com/FastTunnel/FastTunnel/edit/v2/LICENSE
+// Copyright (c) 2019 Gui.H
+
+using FastTunnel.Core.Config;
 using FastTunnel.Core.Models;
 using Microsoft.Extensions.Logging;
-using FastTunnel.Core.Handlers.Server;
 using System.Collections.Concurrent;
 using System;
-using FastTunnel.Core.Listener;
-using FastTunnel.Core.Dispatchers;
 using System.Threading.Tasks;
 using System.Threading;
-using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.Options;
+using System.IO;
+using Yarp.ReverseProxy.Configuration;
+using System.Collections.Generic;
+using FastTunnel.Core.Forwarder.MiddleWare;
 
 namespace FastTunnel.Core.Client
 {
     public class FastTunnelServer
     {
+        public int ConnectedClientCount;
+        public readonly IOptionsMonitor<DefaultServerConfig> ServerOption;
+        public IProxyConfigProvider proxyConfig;
+        readonly ILogger<FastTunnelServer> logger;
+
+        public ConcurrentDictionary<string, (TaskCompletionSource<Stream>, CancellationToken)> ResponseTasks { get; } = new();
+
+        public ConcurrentDictionary<string, WebInfo> WebList { get; private set; } = new();
+
+        public ConcurrentDictionary<int, ForwardInfo<ForwardHandlerArg>> ForwardList { get; private set; }
+            = new ConcurrentDictionary<int, ForwardInfo<ForwardHandlerArg>>();
+
         /// <summary>
-        /// 外部请求，需要定期清理
-        /// TODO:是否可以实现LRU
+        /// 在线客户端列表
         /// </summary>
-        public ConcurrentDictionary<string, NewRequest> RequestTemp { get; private set; }
-            = new ConcurrentDictionary<string, NewRequest>();
+        public IList<TunnelClient> Clients = new List<TunnelClient>();
 
-        public ConcurrentDictionary<string, WebInfo> WebList { get; private set; }
-            = new ConcurrentDictionary<string, WebInfo>();
-
-        public ConcurrentDictionary<int, SSHInfo<SSHHandlerArg>> SSHList { get; private set; }
-            = new ConcurrentDictionary<int, SSHInfo<SSHHandlerArg>>();
-
-        public readonly IServerConfig ServerSettings;
-        readonly ILogger _logger;
-        readonly ClientListenerV2 clientListener;
-        readonly HttpListenerV2 http_listener;
-
-        public FastTunnelServer(ILogger<FastTunnelServer> logger, IConfiguration configuration)
+        public FastTunnelServer(ILogger<FastTunnelServer> logger, IProxyConfigProvider proxyConfig, IOptionsMonitor<DefaultServerConfig> serverSettings)
         {
-            _logger = logger;
-            ServerSettings = configuration.Get<AppSettings>().ServerSettings;
-
-            clientListener = new ClientListenerV2(this, ServerSettings.BindAddr, ServerSettings.BindPort, _logger);
-            http_listener = new HttpListenerV2(ServerSettings.BindAddr, ServerSettings.WebProxyPort, _logger);
+            this.logger = logger;
+            this.ServerOption = serverSettings;
+            this.proxyConfig = proxyConfig;
         }
 
-        public void Run()
+        /// <summary>
+        /// 客户端登录
+        /// </summary>
+        /// <param name="client"></param>
+        internal void ClientLogin(TunnelClient client)
         {
-            _logger.LogInformation("===== FastTunnel Server Starting =====");
-
-            checkSettins();
-
-            listenClient();
-            listenHttp();
+            Interlocked.Increment(ref ConnectedClientCount);
+            logger.LogInformation($"客户端连接 {client.RemoteIpAddress} 当前在线数：{ConnectedClientCount}，统计CLIENT连接数：{FastTunnelClientHandler.ConnectionCount}");
+            Clients.Add(client);
         }
 
-        private void checkSettins()
+        /// <summary>
+        /// 客户端退出
+        /// </summary>
+        /// <param name="client"></param>
+        /// <exception cref="NotImplementedException"></exception>
+        internal void ClientLogout(TunnelClient client)
         {
-            if (string.IsNullOrEmpty(ServerSettings.WebDomain))
-            {
-                throw new Exception("[WebDomain] 配置不能为空");
-            }
-        }
-
-        private void listenClient()
-        {
-            clientListener.Start();
-        }
-
-        private void listenHttp()
-        {
-            http_listener.Start(new HttpDispatcherV2(this, _logger, ServerSettings));
-        }
-
-        public void Stop()
-        {
-            _logger.LogInformation("===== FastTunnel Server Stoping =====");
-
-            clientListener.Stop();
-            http_listener.Stop();
+            Interlocked.Decrement(ref ConnectedClientCount);
+            logger.LogInformation($"客户端关闭  {client.RemoteIpAddress} 当前在线数：{ConnectedClientCount}，统计CLIENT连接数：{FastTunnelClientHandler.ConnectionCount - 1}");
+            Clients.Remove(client);
+            client.Logout();
         }
     }
 }

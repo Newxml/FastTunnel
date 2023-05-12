@@ -1,17 +1,23 @@
-﻿using FastTunnel.Core.Dispatchers;
+// Licensed under the Apache License, Version 2.0 (the "License").
+// You may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//     https://github.com/FastTunnel/FastTunnel/edit/v2/LICENSE
+// Copyright (c) 2019 Gui.H
+
+using FastTunnel.Core.Handlers;
 using FastTunnel.Core.Handlers.Server;
 using Microsoft.Extensions.Logging;
 using System;
-using System.Collections.Generic;
 using System.Net;
 using System.Net.Sockets;
+using System.Net.WebSockets;
 using System.Threading;
 
 namespace FastTunnel.Core.Listener
 {
-    public class PortProxyListener : IListener
+    public class PortProxyListener
     {
-        ILogger _logerr;
+        readonly ILogger _logerr;
 
         public string ListenIp { get; set; }
 
@@ -19,13 +25,14 @@ namespace FastTunnel.Core.Listener
 
         int m_numConnectedSockets;
 
-        bool shutdown = false;
-        IListenerDispatcher _requestDispatcher;
-        Socket listenSocket;
-        public IList<Socket> ConnectedSockets = new List<Socket>();
+        bool shutdown;
+        ForwardDispatcher _requestDispatcher;
+        readonly Socket listenSocket;
+        readonly WebSocket client;
 
-        public PortProxyListener(string ip, int port, ILogger logerr)
+        public PortProxyListener(string ip, int port, ILogger logerr, WebSocket client)
         {
+            this.client = client;
             _logerr = logerr;
             this.ListenIp = ip;
             this.ListenPort = port;
@@ -37,14 +44,67 @@ namespace FastTunnel.Core.Listener
             listenSocket.Bind(localEndPoint);
         }
 
-        public void Start(IListenerDispatcher requestDispatcher, int backlog = 100)
+        public void Start(ForwardDispatcher requestDispatcher)
         {
             shutdown = false;
             _requestDispatcher = requestDispatcher;
 
-            listenSocket.Listen(backlog);
+            listenSocket.Listen();
 
             StartAccept(null);
+        }
+
+        private void StartAccept(SocketAsyncEventArgs acceptEventArg)
+        {
+            try
+            {
+                _logerr.LogDebug($"【{ListenIp}:{ListenPort}】: StartAccept");
+                if (acceptEventArg == null)
+                {
+                    acceptEventArg = new SocketAsyncEventArgs();
+                    acceptEventArg.Completed += new EventHandler<SocketAsyncEventArgs>(AcceptEventArg_Completed);
+                }
+                else
+                {
+                    // socket must be cleared since the context object is being reused
+                    acceptEventArg.AcceptSocket = null;
+                }
+
+                bool willRaiseEvent = listenSocket.AcceptAsync(acceptEventArg);
+                if (!willRaiseEvent)
+                {
+                    ProcessAcceptAsync(acceptEventArg);
+                }
+            }
+            catch (Exception ex)
+            {
+                _logerr.LogError(ex, "待处理异常");
+            }
+        }
+
+        private async void ProcessAcceptAsync(SocketAsyncEventArgs e)
+        {
+            if (e.SocketError == SocketError.Success)
+            {
+                var accept = e.AcceptSocket;
+
+                IncrementClients();
+
+                // 将此客户端交由Dispatcher进行管理
+                _requestDispatcher.DispatchAsync(accept, client, this);
+
+                // Accept the next connection request
+                StartAccept(e);
+            }
+            else
+            {
+                Stop();
+            }
+        }
+
+        private void AcceptEventArg_Completed(object sender, SocketAsyncEventArgs e)
+        {
+            ProcessAcceptAsync(e);
         }
 
         public void Stop()
@@ -66,73 +126,21 @@ namespace FastTunnel.Core.Listener
             {
                 shutdown = true;
                 listenSocket.Close();
-                Interlocked.Decrement(ref m_numConnectedSockets);
             }
         }
 
-        private void StartAccept(SocketAsyncEventArgs acceptEventArg)
+        internal void IncrementClients()
         {
-            _logerr.LogDebug($"【{ListenIp}:{ListenPort}】: StartAccept");
-            if (acceptEventArg == null)
-            {
-                acceptEventArg = new SocketAsyncEventArgs();
-                acceptEventArg.Completed += new EventHandler<SocketAsyncEventArgs>(AcceptEventArg_Completed);
-            }
-            else
-            {
-                // socket must be cleared since the context object is being reused
-                acceptEventArg.AcceptSocket = null;
-            }
+            Interlocked.Increment(ref m_numConnectedSockets);
+            _logerr.LogInformation($"[Listener:{ListenPort}] Accepted. There are {{0}} clients connected", m_numConnectedSockets);
 
-            bool willRaiseEvent = listenSocket.AcceptAsync(acceptEventArg);
-            if (!willRaiseEvent)
-            {
-                ProcessAccept(acceptEventArg);
-            }
         }
 
-        private void ProcessAccept(SocketAsyncEventArgs e)
+        internal void DecrementClients()
         {
-            if (e.SocketError == SocketError.Success)
-            {
-                var accept = e.AcceptSocket;
+            Interlocked.Decrement(ref m_numConnectedSockets);
+            _logerr.LogInformation($"[Listener:{ListenPort}] DisConnet. There are {{0}} clients connecting", m_numConnectedSockets);
 
-                Interlocked.Increment(ref m_numConnectedSockets);
-
-                _logerr.LogInformation($"【{ListenIp}:{ListenPort}】Accepted. There are {{0}} clients connected to the port",
-                    m_numConnectedSockets);
-
-                // Accept the next connection request
-                StartAccept(e);
-
-                try
-                {
-                    // 将此客户端交由Dispatcher进行管理
-                    _requestDispatcher.Dispatch(accept);
-                }
-                catch (Exception ex)
-                {
-                    _logerr.LogError(ex, "RequestDispatcher Fail");
-                }
-            }
-            else
-            {
-                Stop();
-            }
-        }
-
-        private void AcceptEventArg_Completed(object sender, SocketAsyncEventArgs e)
-        {
-            ProcessAccept(e);
-        }
-
-        public void Close()
-        {
-        }
-
-        public void Start(int backlog = 100)
-        {
-            throw new NotImplementedException();
         }
     }
 }

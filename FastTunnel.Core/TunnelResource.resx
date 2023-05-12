@@ -117,6 +117,9 @@
   <resheader name="writer">
     <value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
   </resheader>
+  <data name="ForwardDisabled" xml:space="preserve">
+    <value>服务端禁用了Forward</value>
+  </data>
   <data name="NoTunnel" xml:space="preserve">
     <value>您尚未创建任何隧道，请登录https://suidao.io 创建后重试。</value>
   </data>
@@ -239,7 +242,6 @@
   <data name="Page_NoSite" xml:space="preserve">
     <value>&lt;!DOCTYPE html&gt;
 &lt;html lang="en"&gt;
-
 &lt;head&gt;
   &lt;meta charset="utf-8" /&gt;
   &lt;meta name="viewport" content="width=device-width, initial-scale=1.0" /&gt;
@@ -469,7 +471,7 @@
 
 &lt;/html&gt;</value>
   </data>
-  <data name="Page_NoTunnel" xml:space="preserve">
+  <data name="Page_NotFund" xml:space="preserve">
     <value>&lt;!DOCTYPE html&gt;
 &lt;html lang="en"&gt;
 
@@ -584,7 +586,210 @@
 &lt;/body&gt;
 
 &lt;/html&gt;</value>
+  </data>
+  <data name="Page_Offline" xml:space="preserve">
+    <value>&lt;!DOCTYPE html&gt;
+&lt;html lang="en"&gt;
+
+&lt;head&gt;
+  &lt;meta charset="utf-8" /&gt;
+  &lt;meta name="viewport" content="width=device-width, initial-scale=1.0" /&gt;
+  &lt;title&gt;FastTunnel&lt;/title&gt;
+  &lt;link href="https://cdn.bootcss.com/twitter-bootstrap/4.4.1/css/bootstrap.min.css" rel="stylesheet"&gt;
+  &lt;style&gt;
+    .err-info {
+      margin-top: 120px;
+    }
+
+    /* Provide sufficient contrast against white background */
+    a {
+      color: #0366d6;
+    }
+
+    .btn-primary {
+      color: #fff;
+      background-color: #1b6ec2;
+      border-color: #1861ac;
+    }
+
+    .nav-pills .nav-link.active,
+    .nav-pills .show&gt;.nav-link {
+      color: #fff;
+      background-color: #1b6ec2;
+      border-color: #1861ac;
+    }
+
+    /* Sticky footer styles
+-------------------------------------------------- */
+    html {
+      font-size: 14px;
+    }
+
+    @media (min-width: 768px) {
+      html {
+        font-size: 16px;
+      }
+    }
+
+    .border-top {
+      border-top: 1px solid #e5e5e5;
+    }
+
+    .border-bottom {
+      border-bottom: 1px solid #e5e5e5;
+    }
+
+    .box-shadow {
+      box-shadow: 0 .25rem .75rem rgba(0, 0, 0, .05);
+    }
+
+    button.accept-policy {
+      font-size: 1rem;
+      line-height: inherit;
+    }
+
+    /* Sticky footer styles
+-------------------------------------------------- */
+    html {
+      position: relative;
+      min-height: 100%;
+    }
+
+    body {
+      /* Margin bottom by footer height */
+      margin-bottom: 60px;
+    }
+
+    .footer {
+      position: absolute;
+      bottom: 0;
+      width: 100%;
+      white-space: nowrap;
+      line-height: 60px;
+      /* Vertically center the text there */
+    }
+  &lt;/style&gt;
+&lt;/head&gt;
+
+&lt;body&gt;
+  &lt;div class="container err-info"&gt;
+    &lt;main role="main" class="pb-3"&gt;
+      &lt;div class="text-center"&gt;
+        &lt;h1 class="display-4"&gt;客户端已离线&lt;/h1&gt;
+        &lt;p&gt;登录遇到问题？ 去github提交&lt;a target="_blank" href="https://github.com/SpringHgui/FastTunnel/issues"&gt;issue&lt;/a&gt;给软件作者.
+        &lt;/p&gt;
+      &lt;/div&gt;
+
+      &lt;blockquote style="padding-top: 4em;"&gt;
+        &lt;p class="lead"&gt;您看到本页面表示当前隧道尚未登录，如果您是当前隧道地址的拥有者，请检查以下原因：&lt;/p&gt;
+      &lt;/blockquote&gt;
+      &lt;ol&gt;
+        &lt;li class="lead"&gt;是否创建了当前子域名的隧道&lt;/li&gt;
+        &lt;li class="lead"&gt;是否在后台设置中禁用了当前隧道&lt;/li&gt;
+        &lt;li class="lead"&gt;是否启动了客户端并登录成功&lt;/li&gt;
+      &lt;/ol&gt;
+      &lt;blockquote style="padding-top: 4em;"&gt;
+        &lt;p class="lead"&gt;提醒：当前软件处于开发阶段，客户端版本可能会更新频繁，如遇到客户端异常，请登录&lt;a target="_blank" href="https://suidao.io"&gt;suidao.io&lt;/a&gt;下载最新的客户端重试。&lt;/p&gt;
+      &lt;/blockquote&gt;
+    &lt;/main&gt;
+  &lt;/div&gt;
+
+  &lt;footer class="border-top footer text-muted"&gt;
+    &lt;div class="container"&gt;
+      &lt;a href="https://github.com/SpringHgui/FastTunnel" target="_blank"&gt;© Power By FastTunnel&lt;/a&gt;
+    &lt;/div&gt;
+  &lt;/footer&gt;
+&lt;/body&gt;
+
+&lt;/html&gt;</value>
     <comment>客户端未登录</comment>
+  </data>
+  <data name="Test" xml:space="preserve">
+    <value>HTTP/1.1 200 OK
+Date: Sat, 21 Aug 2021 15:14:17 GMT
+Content-Type: text/html; charset=utf-8
+Server: Microsoft-IIS/10.0
+X-Powered-By: ASP.NET
+Content-Length: 3026
+
+&lt;!DOCTYPE html&gt;
+&lt;html lang="en"&gt;
+&lt;head&gt;
+    &lt;meta charset="utf-8" /&gt;
+    &lt;meta name="viewport" content="width=device-width, initial-scale=1.0" /&gt;
+    &lt;title&gt; - BX.SignalR&lt;/title&gt;
+    &lt;link rel="stylesheet" href="/lib/bootstrap/dist/css/bootstrap.min.css" /&gt;
+    &lt;link rel="stylesheet" href="/css/site.css" /&gt;
+&lt;/head&gt;
+&lt;body&gt;
+    &lt;header&gt;
+        &lt;nav class="navbar navbar-expand-sm navbar-toggleable-sm navbar-light bg-white border-bottom box-shadow mb-3"&gt;
+            &lt;div class="container"&gt;
+                &lt;a class="navbar-brand" href="/"&gt;BX.SignalR&lt;/a&gt;
+                &lt;button class="navbar-toggler" type="button" data-toggle="collapse" data-target=".navbar-collapse" aria-controls="navbarSupportedContent"
+                        aria-expanded="false" aria-label="Toggle navigation"&gt;
+                    &lt;span class="navbar-toggler-icon"&gt;&lt;/span&gt;
+                &lt;/button&gt;
+                &lt;div class="navbar-collapse collapse d-sm-inline-flex justify-content-between"&gt;
+                    &lt;ul class="navbar-nav flex-grow-1"&gt;
+                        &lt;li class="nav-item"&gt;
+                            &lt;a class="nav-link text-dark" href="/"&gt;Home&lt;/a&gt;
+                        &lt;/li&gt;
+                        &lt;li class="nav-item"&gt;
+                            &lt;a class="nav-link text-dark" href="/Privacy"&gt;Privacy&lt;/a&gt;
+                        &lt;/li&gt;
+                    &lt;/ul&gt;
+                &lt;/div&gt;
+            &lt;/div&gt;
+        &lt;/nav&gt;
+    &lt;/header&gt;
+    &lt;div class="container"&gt;
+        &lt;main role="main" class="pb-3"&gt;
+                &lt;div class="container"&gt;
+        &lt;div class="row"&gt;&amp;nbsp;&lt;/div&gt;
+        &lt;div class="row"&gt;
+            &lt;div class="col-2"&gt;User&lt;/div&gt;
+            &lt;div class="col-4"&gt;&lt;input type="text" id="userInput" /&gt;&lt;/div&gt;
+        &lt;/div&gt;
+        &lt;div class="row"&gt;
+            &lt;div class="col-2"&gt;Message&lt;/div&gt;
+            &lt;div class="col-4"&gt;&lt;input type="text" id="messageInput" /&gt;&lt;/div&gt;
+        &lt;/div&gt;
+        &lt;div class="row"&gt;&amp;nbsp;&lt;/div&gt;
+        &lt;div class="row"&gt;
+            &lt;div class="col-6"&gt;
+                &lt;input type="button" id="sendButton" value="Send Message" /&gt;
+            &lt;/div&gt;
+        &lt;/div&gt;
+    &lt;/div&gt;
+    &lt;div class="row"&gt;
+        &lt;div class="col-12"&gt;
+            &lt;hr /&gt;
+        &lt;/div&gt;
+    &lt;/div&gt;
+    &lt;div class="row"&gt;
+        &lt;div class="col-6"&gt;
+            &lt;ul id="messagesList"&gt;&lt;/ul&gt;
+        &lt;/div&gt;
+    &lt;/div&gt;
+&lt;script src="/js/signalr/dist/browser/signalr.js"&gt;&lt;/script&gt;
+&lt;script src="/js/chat.js"&gt;&lt;/script&gt;
+        &lt;/main&gt;
+    &lt;/div&gt;
+
+    &lt;footer class="border-top footer text-muted"&gt;
+        &lt;div class="container"&gt;
+            &amp;copy; 2020 - BX.SignalR - &lt;a href="/Privacy"&gt;Privacy&lt;/a&gt;
+        &lt;/div&gt;
+    &lt;/footer&gt;
+
+    &lt;script src="/lib/jquery/dist/jquery.min.js"&gt;&lt;/script&gt;
+    &lt;script src="/lib/bootstrap/dist/js/bootstrap.bundle.min.js"&gt;&lt;/script&gt;
+    &lt;script src="/js/site.js?v=4q1jwFhaPaZgr8WAUSrux6hAuh0XDg9kPS3xIVq36I0"&gt;&lt;/script&gt;
+
+    
+&lt;script src="/_framework/aspnetcore-browser-refresh.js"&gt;&lt;/script&gt;&lt;/body&gt;
+&lt;/html&gt;</value>
   </data>
   <data name="TunnelLlist" xml:space="preserve">
     <value>\n=====隧道已建立成功，现在可以通过以下方式访问您的内网服务了=====\n{0}\n</value>

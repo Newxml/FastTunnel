@@ -1,21 +1,29 @@
-name: .NET Core
+name: Build
 
-on: [push]
+on:
+  push:
+    branches:
+    - v2
+
+env:
+  # 设置 docker 镜像名
+  IMAGE_NAME: fasttunnel-v2
 
 jobs:
-  #build:
-  #  runs-on: ubuntu-latest
-  #  steps:
-  #  - uses: actions/checkout@v1
-  #  - name: Setup .NET Core
-  #    uses: actions/setup-dotnet@v1
-  #    with:
-  #      dotnet-version: 3.1.100
-  #  - name: Build with dotnet
-  #    run: dotnet build --configuration Release
+  build:
+   runs-on: ubuntu-latest
+   steps:
+   - uses: actions/checkout@v1
+   - name: Setup .NET Core
+     uses: actions/setup-dotnet@v1
+     with:
+       dotnet-version: 7.0.*
+       include-prerelease: true
+   - name: Build with dotnet
+     run: chmod +x ./publish.sh
       
   publish:
-    name: build, pack & publish
+    name: publish-core
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v2
@@ -23,12 +31,12 @@ jobs:
       - name: Setup dotnet
         uses: actions/setup-dotnet@v1
         with:
-           dotnet-version: 5.0.203
-
+           dotnet-version: 7.0.*
+           include-prerelease: true
       # Publish
       - name: publish on version change
         id: publish_nuget
-        uses: rohith/publish-nuget@v2
+        uses: SpringHgui/publish-nuget@1.0.1
         with:
           # Filepath of the project to be packaged, relative to root of repository
           PROJECT_FILE_PATH: FastTunnel.Core/FastTunnel.Core.csproj
@@ -59,3 +67,57 @@ jobs:
 
           # Flag to toggle pushing symbols along with nuget package to the server, disabled by default
           # INCLUDE_SYMBOLS: false
+
+  api:
+    name: publish-api
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+
+      - name: Setup dotnet
+        uses: actions/setup-dotnet@v1
+        with:
+           dotnet-version: 7.0.*
+           include-prerelease: true
+
+      # Publish
+      - name: publish on version change
+        id: publish_nuget
+        uses: SpringHgui/publish-nuget@1.0.1
+        with:
+          # Filepath of the project to be packaged, relative to root of repository
+          PROJECT_FILE_PATH: FastTunnel.Api/FastTunnel.Api.csproj
+          NUGET_KEY: ${{secrets.NUGET_API_KEY}}
+  docker:
+    name: publish-docker
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+        # 构建镜像，指定镜像名
+      - name: Build image
+        run: docker build . --file Dockerfile --tag $IMAGE_NAME
+        # 登录到 dockerhub，使用 GitHub secrets 传入账号密码，密码被加密存储在 GitHub 服务器，添加方法见下图。
+      - name: Log into registry
+        run: echo "${{ secrets.DOCKERHUB_TOKEN }}" | docker login -u springhgui --password-stdin
+
+      - name: Push image
+        run: |
+          IMAGE_ID=springhgui/$IMAGE_NAME
+          IMAGE_ID=$(echo $IMAGE_ID | tr '[A-Z]' '[a-z]')
+          VERSION=$(date "+%Y.%m.%d")
+
+          echo IMAGE_ID=$IMAGE_ID
+          echo VERSION=$VERSION
+          # 设置镜像 id 和版本号
+          echo [tag] $IMAGE_NAME $IMAGE_ID:$VERSION
+          docker tag $IMAGE_NAME $IMAGE_ID:$VERSION
+          # 进行 push
+          echo [push] $IMAGE_ID:$VERSION
+          docker push $IMAGE_ID:$VERSION
+          # 再上传一份覆盖latest
+          echo [tag] $IMAGE_ID:$VERSION $IMAGE_ID:latest
+          docker tag $IMAGE_ID:$VERSION $IMAGE_ID:latest
+          
+          echo [push] $IMAGE_ID:latest
+          docker push $IMAGE_ID:latest
+          
